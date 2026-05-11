@@ -1,176 +1,143 @@
 # hmz-personal-ai-infrastructure
-the full AI stack — one machine, 20+ models, zero idle capacity
+Full personal AI stack — local models, cloud burst, LaunchAgent daemons, and Paperclip CEO all running on a single MacBook Pro with intelligent RAM management.
 
-![Stack](https://img.shields.io/badge/AI_Stack-Production-6C3EE8?style=flat&labelColor=000) ![Models](https://img.shields.io/badge/models-20%2B-blue?style=flat&labelColor=555) ![Local](https://img.shields.io/badge/local-7_GPU_models-orange?style=flat&labelColor=555) ![Cloud](https://img.shields.io/badge/cloud-13%2B_APIs-green?style=flat&labelColor=555) ![Cost](https://img.shields.io/badge/cost-75--95%25_below_all--Claude-brightgreen?style=flat&labelColor=555)
+![local](https://img.shields.io/badge/local_models-GPT4All%2BOllama-blue?style=flat&labelColor=555) ![cloud](https://img.shields.io/badge/cloud_burst-8_providers-green?style=flat&labelColor=555) ![daemons](https://img.shields.io/badge/daemons-8_always_on-orange?style=flat&labelColor=555) ![cost](https://img.shields.io/badge/monthly_cost-near_zero-brightgreen?style=flat&labelColor=555)
 
-The complete personal AI infrastructure powering DigiMinds — local GPU inference, cloud API routing, MCP servers, LaunchAgents, autonomous agents, and the cost optimization layer. Everything runs on a single M1 Pro MacBook Pro. Zero idle capacity — every free service is deployed, every local GPU cycle is used.
+[Concepts](#-concepts) · [Hot](#-hot) · [Stack](#️-full-stack) · [Tips](#-tips-and-tricks-22) · [Replaced](#️-startups--businesses) · [Stars](#star-history)
 
-[Hardware](#hardware) · [Full Stack](#stack) · [Cost Model](#cost) · [Service Map](#services) · [Tips](#tips) · [Gotchas](#gotchas)
+---
 
-## 🧠 ARCHITECTURE
+## 🧠 CONCEPTS
+
+| Feature | Location | Description |
+|---------|----------|-------------|
+| [**Ollama (local)**](https://github.com/hmzainjamil/hmz-ollama) | `localhost:11434` | Always-on via LaunchAgent — llama3:latest on GPU, 40-60 tok/sec |
+| [**GPT4All (local)**](https://gpt4all.io) | Desktop app | 7 models: Meta-Llama-3-8B · Qwen2.5-Coder-7B · Phi-3-mini · Mistral-7B — fully offline |
+| [**Groq (cloud burst)**](https://console.groq.com) | API | llama3-70b fastest cloud — free tier, 6K tok/min |
+| [**Gemini Flash (cloud)**](https://ai.google.dev) | API | 1,500 free calls/day — primary analysis + summarization model |
+| [**DeepSeek-V3 (cloud)**](https://api.deepseek.com) | API | Best reasoning + code — $0.27/1M tokens |
+| [**GLM (cloud)**](https://open.bigmodel.cn) | API | glm-4.5, glm-4.5-air, glm-5-turbo — multilingual, cheap |
+| [**Gemma4-31B (cloud)**](https://ai.google.dev) | API | gemma-4-31b-it via Google AI and OpenRouter free |
+| [**Paperclip CEO**](https://github.com/hmzainjamil/hmz-digiminds-ceo) | `localhost:3100` | Autonomous CEO daemon — 50 agents, 20 goals, 28 KPIs |
+| [**G0DM0D3 Routing**](https://github.com/hmzainjamil/hmz-g0dm0d3) | `CLAUDE.md` | Automatic model selection — Tier 0 first, Claude only for final output |
+
+### 🔥 Hot
+
+| Feature | Location | Description |
+|---------|----------|-------------|
+| [**RAM manager**](~/.claude/bin/auto-troubleshoot) | `auto-troubleshoot` | Checks RAM at session start — skips Ollama burst if <2GB free, warns on pressure |
+| [**Dashscope/Wan**](https://dashscope.console.aliyun.com) | API | `wan2.7-image`, `wan2.7-image-pro`, `Qwen3.6` — image gen + Alibaba models now in Tier 0 |
+| [**llm-burst parallel**](~/.claude/bin/llm-burst) | `llm-burst` | 8 models simultaneously — total wall-clock time = slowest model (~3s), not sum |
+
+---
+
+## ⚙️ FULL STACK
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│  USER INTERFACE                                              │
-│  Claude Code CLI  |  OpenCode Terminal  |  n8n Dashboard    │
-├─────────────────────────────────────────────────────────────┤
-│  ORCHESTRATION                                               │
-│  Paperclip AI (port 3100) — 50 agents, CEO control         │
-│  OpenClaw MCP Gateway (port 51827)                          │
-├─────────────────────────────────────────────────────────────┤
-│  MODEL ROUTING (G0DM0D3 — 3 tier waterfall)                 │
-│  Tier 0: Ollama GPU → Groq → Gemini → DeepSeek → Kimi      │
-│           → GPT-4o-mini → Mistral → OpenRouter → GLM        │
-│  Tier 1: Claude Haiku (last resort)                         │
-│  Tier 2: Claude Sonnet (final output only)                  │
-├─────────────────────────────────────────────────────────────┤
-│  MCP TOOL LAYER                                              │
-│  Gmail | Notion | Airtable | Composio (250+ apps)           │
-│  GitHub | Slack | Calendar | Apollo | Facebook Ads          │
-│  Google Ads | Canva | LinkedIn | Paperclip | Computer Use   │
-├─────────────────────────────────────────────────────────────┤
-│  DATA & MEMORY                                               │
-│  ~/.claude/projects/*/memory/  (persistent cross-session)   │
-│  ~/.paperclip/ceo-decisions.log                             │
-│  ~/Downloads/ (all generated outputs)                       │
-│  ~/.claude/tier0-cache.json (prompt dedup cache)            │
-└─────────────────────────────────────────────────────────────┘
+MacBook Pro (M-series, 32GB RAM recommended)
+├── LOCAL MODELS (always-on, LaunchAgent)
+│   ├── Ollama → llama3:latest (GPU, 40-60 tok/sec)
+│   └── GPT4All → 7 models (on-demand, CPU/GPU)
+│
+├── CLOUD BURST (on demand, Tier 0)
+│   ├── Groq (fastest, free tier)
+│   ├── Gemini Flash (1,500/day free)
+│   ├── DeepSeek-V3 (best quality, cheap)
+│   ├── GLM (multilingual, cheap)
+│   ├── Gemma4-31B (OpenRouter free)
+│   ├── GPT-4o-mini (reliable fallback)
+│   └── Kimi/Moonshot (262K context)
+│
+├── DAEMONS (8 always-on LaunchAgents)
+│   ├── Paperclip CEO (port 3100)
+│   ├── OpenClaw Gateway
+│   ├── Ollama
+│   ├── GitHub Portfolio Sync (6:30 AM)
+│   └── 4 Paperclip engines (lead/content/kpi/trends)
+│
+└── CLAUDE CODE (session-based)
+    ├── 45 bin scripts
+    ├── 13 core skills
+    └── G0DM0D3 routing → Tier 0 first
 ```
 
-<a id="hardware"></a>
-## ⚙️ HARDWARE
+| Resource | Allocation | Notes |
+|----------|-----------|-------|
+| RAM: Ollama | 4-8GB | GPU memory, shared with system |
+| RAM: GPT4All | 4-6GB | On-demand only |
+| RAM: Paperclip | 200-500MB | Lightweight Node.js server |
+| RAM: System | 8-16GB | macOS + Claude Code session |
+| Storage: Models | 15-40GB | Ollama model library |
+| Monthly cost | ~$5-15 | Cloud API usage only |
 
-| Component | Spec | AI Role |
-|---|---|---|
-| CPU | Apple M1 Pro (10-core) | Orchestration, API calls |
-| GPU | 16-core Apple GPU | Ollama Metal inference |
-| RAM | 16GB unified | Shared CPU+GPU — critical constraint |
-| Storage | 512GB SSD | Model storage (~20GB), workflow data |
-| Network | WiFi 6 | Cloud API calls, webhooks |
+---
 
-**RAM allocation at full load:**
-```
-macOS system:          ~4GB
-Ollama (2 models hot): ~9.4GB (llama3 + codellama)
-Paperclip AI:          ~500MB
-OpenClaw:              ~200MB
-n8n:                   ~300MB
-Chrome (browser):      ~800MB
-Available for tasks:   ~800MB
-```
+## 💡 TIPS AND TRICKS (22)
 
-**RAM constraint rule:** When <2GB free, `tier0-check` skips Ollama, routes to Groq instead.
+[RAM](#tips-ram) · [Models](#tips-models) · [Daemons](#tips-daemons) · [Cost](#tips-cost) · [Privacy](#tips-priv)
 
-<a id="stack"></a>
-## 💡 FULL STACK
+<a id="tips-ram"></a>■ **RAM Management (5)**
 
-■ **Always-On Services (LaunchAgents)**
+| Tip | Source |
+|-----|--------|
+| `OLLAMA_KEEP_ALIVE=24h` keeps models in GPU memory — eliminates cold start | [Ollama config](../hmz-ollama/) |
+| Skip Ollama in llm-burst when RAM < 2GB — `auto-troubleshoot` does this automatically | [RAM rule](CLAUDE.md) |
+| GPT4All and Ollama can run simultaneously — different memory pools, no conflict | [Architecture](~/.claude/bin/) |
+| Activity Monitor → GPU History shows if Ollama is using GPU or CPU | [macOS monitoring](launchagents/) |
+| Quit Chrome/Slack before running heavy local model tasks — they eat RAM fast | [Ops rule](CLAUDE.md) |
 
-| Service | Port | Process | RAM |
-|---|---|---|---|
-| Paperclip AI | 3100 | Node.js | ~500MB |
-| OpenClaw Gateway | 51827 | Node.js | ~200MB |
-| Ollama (GPU inference) | 11434 | Go binary | varies (model-dependent) |
-| Open Design | 51827 | Node.js | ~100MB |
+<a id="tips-models"></a>■ **Model Selection (5)**
 
-■ **Local LLM Models (Ollama)**
+| Tip | Source |
+|-----|--------|
+| Default routing: general → llama3 · code → CodeLlama · fast → Groq · analysis → Gemini | [G0DM0D3](../hmz-g0dm0d3/) |
+| Long docs (>50K tokens) → Kimi k2.5 (262K) or Gemini 1.5 Pro (1M) | [Context routing](../hmz-g0dm0d3/) |
+| Private/sensitive data → GPT4All or Ollama only — no network calls | [Privacy rule](CLAUDE.md) |
+| `ollama pull deepseek-coder:6.7b` for code tasks when DeepSeek API is down | [Fallback](../hmz-ollama/) |
+| Gemma4-31B on OpenRouter is currently free — use before it gets rate-limited | [Cost tip](../hmz-g0dm0d3/) |
 
-| Model | Size on disk | VRAM hot | Speed |
-|---|---|---|---|
-| llama3:latest | 4.7GB | 4.7GB | 45 t/s |
-| llama3.2:3b | 2.0GB | 2.1GB | 85 t/s |
-| mistral:7b | 4.1GB | 4.3GB | 42 t/s |
-| codellama:7b | 3.8GB | 4.2GB | 40 t/s |
-| phi3:mini | 2.2GB | 2.3GB | 70 t/s |
-| deepseek-coder:6.7b | 3.8GB | 4.0GB | 38 t/s |
+<a id="tips-daemons"></a>■ **Daemons (5)**
 
-■ **Cloud APIs (Tier 0)**
+| Tip | Source |
+|-----|--------|
+| All 8 daemons verified at session start by `auto-troubleshoot` hook | [auto-troubleshoot](../claude-ai-system/automations/bin/auto-troubleshoot) |
+| Daemon logs: `~/Library/Logs/ai.hmz.*.log` — one file per daemon | [Log location](launchagents/) |
+| `launchctl list \| grep ai.hmz` — green column = PID (running), `-` = stopped | [Status check](launchagents/) |
+| Never `killall` a daemon — use `launchctl stop ai.hmz.<name>` to graceful-stop | [Safe stop](launchagents/) |
+| After macOS update: reload all plists with `launchctl unload` then `load` | [Update SOP](launchagents/) |
 
-| Provider | Free Tier | Paid | Models |
-|---|---|---|---|
-| Groq | 6K req/day | $0.59/1M | llama3-70b, mixtral |
-| Gemini | 1500 req/day | $0.075/1M | flash, 1.5-pro |
-| DeepSeek | — | $0.27/1M | V3, R1 |
-| Moonshot/Kimi | — | low | K2.5 (262K), v1-128k |
-| OpenRouter | free models | varies | 100+ models |
-| OpenAI | — | $0.15/1M | gpt-4o-mini |
-| GLM | free quota | — | glm-4.5, glm-5 |
-| Dashscope | — | — | wan2.7-image, Qwen |
+<a id="tips-cost"></a>■ **Cost (4)**
 
-■ **MCP Servers (50+ tools)**
+| Tip | Source |
+|-----|--------|
+| Full stack monthly cost: ~$5-15 (API overage above free tiers only) | [Cost model](CLAUDE.md) |
+| Free tiers: Groq 6K tok/min · Gemini 1,500 calls/day · Gemma4 via OpenRouter | [Free quotas](../hmz-g0dm0d3/) |
+| Claude Sonnet at $3/1M tokens — only for final output, not sub-tasks | [Claude pricing](https://anthropic.com) |
+| `llm-burst` 8 parallel at $0.01/task vs Claude Sonnet $0.30/task = 30x savings | [Benchmark](../claude-ai-system/automations/bin/llm-burst) |
 
-| Server | Tools | Auth |
-|---|---|---|
-| OpenClaw | 7 (routing, skills, memory) | Local |
-| Composio | 250+ app connectors | OAuth per app |
-| Gmail | read, search, draft, send | OAuth2 |
-| Notion | pages, databases, comments | API key |
-| Airtable | bases, records, views | API key |
-| GitHub | repos, PRs, issues, actions | PAT |
-| Slack | channels, messages, search | OAuth2 |
-| Calendar | events, scheduling | OAuth2 |
-| Apollo | leads, enrichment, sequences | API key |
-| Facebook Ads | campaigns, insights | OAuth2 |
-| Google Ads | campaigns, keywords, reports | OAuth2 |
+<a id="tips-priv"></a>■ **Privacy (3)**
 
-<a id="cost"></a>
-## 📊 COST MODEL
+| Tip | Source |
+|-----|--------|
+| Client data always through Ollama or GPT4All — never cloud APIs | [Privacy policy](CLAUDE.md) |
+| API keys in LaunchAgent plists, never in code — `EnvironmentVariables` key | [OPSEC](launchagents/) |
+| `github-sync` scrubs all tokens before pushing plists to GitHub | [OPSEC](../claude-ai-system/automations/bin/github-sync) |
 
-**Monthly AI spend (before G0DM0D3):** ~$200-400 (all-Claude)
-**Monthly AI spend (with G0DM0D3):** ~$15-40 (75-95% reduction)
+---
 
-| Cost Driver | Without Routing | With Tier 0 Routing |
-|---|---|---|
-| Research tasks (100/day) | $6/day (Claude) | $0.05/day (Groq/Gemini) |
-| Code generation (50/day) | $3/day (Claude) | $0.10/day (DeepSeek) |
-| Content drafts (20/day) | $1.20/day (Claude) | $0.02/day (GPT-4o-mini) |
-| Sub-agent work (200/day) | $12/day (Claude) | $0/day (Ollama) |
-| Final synthesis (10/day) | $0.60/day (Claude) | $0.60/day (Claude — same) |
-| **Daily total** | **~$22.80** | **~$0.77** |
+## ☠️ STARTUPS / BUSINESSES
 
-<a id="services"></a>
-## 🔧 SERVICE MANAGEMENT
+| Feature | Replaced |
+|-|-|
+| **Local + cloud hybrid routing** | [LangChain](https://langchain.com), [LlamaIndex](https://llamaindex.ai) — cloud-only default |
+| **8-model parallel burst** | Single model API integration — one provider's quality ceiling |
+| **Zero-cost local inference** | [Replicate](https://replicate.com), [Together AI](https://together.ai) — charge per inference |
+| **Always-on daemons** | [RunPod](https://runpod.io), [Lambda Labs](https://lambdalabs.com) — $0.50-2/hr GPU rental |
+| **Automatic RAM management** | Manual model loading/unloading |
+| **G0DM0D3 automatic routing** | Manually choosing model per task |
 
-```bash
-# Full health check
-launchctl list | grep "ai\." | awk '{print $1"	"$2"	"$3}'
+---
 
-# Service status
-curl -s localhost:3100/api/health       # Paperclip
-curl -s localhost:11434/api/tags        # Ollama
-curl -s localhost:51827/health          # OpenClaw
+## Star History
 
-# Model availability
-~/.claude/bin/tier0-check
-
-# RAM usage
-sudo memory_pressure
-vm_stat | grep "Pages free"
-
-# Full system status (auto-troubleshoot)
-~/.claude/bin/auto-troubleshoot
-```
-
-<a id="tips"></a>
-## 💡 TIPS
-
-| Tip | Note |
-|---|---|
-| Keep Chrome closed during heavy Ollama inference — Chrome takes 800MB+ that GPU-shared RAM needs | M1 Pro has unified memory — RAM IS VRAM |
-| Only load 1 Ollama model at a time when doing large-context tasks (>4K tokens) — VRAM fragmentation | `OLLAMA_MAX_LOADED_MODELS=1` |
-| DeepSeek V3 is the best value API for code — $0.27/1M input, outperforms GPT-4o on code benchmarks | First choice for all code generation |
-| Keep Paperclip LaunchAgent priority low (`ProcessType=Background`) — avoids thermal pressure | |
-| Groq 6K req/day free tier resets midnight UTC = 10AM AEST — plan heavy usage after reset | |
-| GPT4All is on-demand only (not LaunchAgent) — `gpt4all-start` script, uses ~500MB RAM when active | |
-
-<a id="gotchas"></a>
-## ☠️ GOTCHAS
-
-| Gotcha | Fix |
-|---|---|
-| Ollama crashes when RAM < 500MB free — other processes starving it | Kill Chrome tabs, reduce OLLAMA_MAX_LOADED_MODELS=1 |
-| Paperclip Node.js process leaks memory over 48h — exits code 0 but stops responding | LaunchAgent ThrottleInterval=5 catches and restarts |
-| OpenClaw and Open Design both try to use port 51827 — one fails silently | Check which is configured in `.mcp.json` — only one should run |
-| Groq rate limits are per-API-key, not per-IP — rotating keys doesn't help | Stay under 6K req/day on free tier |
-| DeepSeek API latency spikes during Chinese business hours (9AM-6PM CST = 11PM-8AM AEST) | Pre-schedule DeepSeek tasks for AEST 8AM-11PM |
-| `tier0-cache-inject` caches responses by prompt hash — stale responses if data changes | Set TTL = 1h for any task that reads live data |
+[![Star History Chart](https://api.star-history.com/svg?repos=hmzainjamil/hmz-personal-ai-infrastructure&type=Date)](https://star-history.com/#hmzainjamil/hmz-personal-ai-infrastructure&Date)
