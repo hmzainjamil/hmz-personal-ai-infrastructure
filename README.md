@@ -1,6 +1,6 @@
 # HMZ Personal AI Infrastructure
 
-This repository currently contains two Markdown files and no checked-in runtime, installer, dependency manifest, or infrastructure configuration in its recursive Git tree. The name and older summary describe a broader personal AI setup, but this repository snapshot does not contain those components.
+This repository currently contains three Markdown files and no checked-in runtime, installer, dependency manifest, or infrastructure configuration in its recursive Git tree. The name and older summary describe a broader personal AI setup, but this repository snapshot does not contain those components.
 
 ## Repository contents
 
@@ -11,7 +11,7 @@ This repository currently contains two Markdown files and no checked-in runtime,
 
 | Item | Evidence |
 |---|---|
-| Repository content | Two Markdown files in the checked `main` tree |
+| Repository content | Three Markdown files in the checked `main` tree |
 | Runtime or setup | Not present in the checked tree |
 | External integrations | Not verifiable from these files |
 | Validation | No runtime or tests to run from this snapshot |
